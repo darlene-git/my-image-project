@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F-SOCIETY Terminal PRO</title>
+    <meta name="description" content="Enhanced Mr. Robot inspired F-SOCIETY terminal interface in 4K">
+    <meta name="keywords" content="fsociety, mr robot, hacker terminal, cyberpunk, 4k">
+    <style>
+        :root {
+            --primary: #00ff41;
+            --secondary: #008f11;
+            --background: #000;
+            --text: #00ff41;
+            --glitch: #ff00ff;
+            --scanline: rgba(0, 255, 65, 0.05);
+            --error: #ff0033;
+            --warning: #ffcc00;
+            --success: #00ff88;
+        }
+
+        [data-theme="light"] {
+            --primary: #0d3b66;
+            --secondary: #f4d35e;
+            --background: #faf0ca;
+            --text: #0d3b66;
+            --glitch: #ee964b;
+            --scanline: rgba(13, 59, 102, 0.05);
+            --error: #d00000;
+            --warning: #ff9500;
+            --success: #007200;
+        }
+
+        [data-theme="cyber"] {
+            --primary: #ff2a6d;
+            --secondary: #05d9e8;
+            --background: #0d0221;
+            --text: #d1f7ff;
+            --glitch: #ff2a6d;
+            --scanline: rgba(5, 217, 232, 0.05);
+            --error: #ff3864;
+            --warning: #f9c80e;
+            --success: #29bf12;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--background);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            color: var(--text);
+            transition: all 0.5s ease;
+            background-image: radial-gradient(
+                circle at center,
+                var(--background) 0%,
+                #000 100%
+            );
+        }
+
+        .container {
+            position: relative;
+            width: 90%;
+            max-width: 1200px;
+            padding: 30px;
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 20px var(--primary), 
+                        0 0 40px rgba(0, 255, 65, 0.2);
+            margin: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            border-radius: 5px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--primary);
+            padding-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .ascii-art {
+            font-size: clamp(0.5rem, 1.5vw, 1.2rem);
+            line-height: 1.3;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px var(--primary);
+            white-space: pre;
+            overflow: hidden;
+            font-weight: bold;
+            filter: drop-shadow(0 0 5px var(--primary));
+        }
+
+        .terminal {
+            margin-top: 30px;
+        }
+
+        .prompt {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .prompt-text {
+            color: var(--secondary);
+            margin-right: 10px;
+            text-shadow: 0 0 3px var(--secondary);
+            font-weight: bold;
+        }
+
+        .command {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            outline: none;
+            caret-color: var(--primary);
+            font-size: 1.1rem;
+            text-shadow: 0 0 3px var(--primary);
+            letter-spacing: 1px;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 12px;
+            height: 24px;
+            background-color: var(--primary);
+            animation: blink 1s infinite;
+            vertical-align: middle;
+            box-shadow: 0 0 5px var(--primary);
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0%,
+                var(--scanline) 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noiseFilter)' opacity='0.20'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            background: var(--background);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            padding: 8px 15px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            box-shadow: 0 0 5px var(--primary);
+            border-radius: 3px;
+        }
+
+        .btn:hover {
+            background: var(--primary);
+            color: var(--background);
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        #output {
+            max-height: 50vh;
+            overflow-y: auto;
+            padding-right: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) var(--background);
+        }
+
+        #output::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #output::-webkit-scrollbar-track {
+            background: var(--background);
+        }
+
+        #output::-webkit-scrollbar-thumb {
+            background-color: var(--primary);
+            border-radius: 10px;
+        }
+
+        #output div {
+            margin-bottom: 8px;
+            line-height: 1.4;
+            padding: 3px 0;
+            border-bottom: 1px dotted rgba(0, 255, 65, 0.2);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .error {
+            color: var(--error);
+            text-shadow: 0 0 3px var(--error);
+        }
+
+        .warning {
+            color: var(--warning);
+            text-shadow: 0 0 3px var(--warning);
+        }
+
+        .success {
+            color: var(--success);
+            text-shadow: 0 0 3px var(--success);
+        }
+
+        .system {
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15;
+        }
+
+        .status-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--primary);
+            z-index: 50;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+        }
+
+        .connection-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success);
+            margin-right: 8px;
+            box-shadow: 0 0 5px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        @keyframes glitch {
+            0%, 100% { text-shadow: 0 0 5px var(--primary); }
+            10% { transform: translate(-2px, 2px); text-shadow: -2px 2px 3px var(--glitch); }
+            20% { transform: translate(2px, -1px); text-shadow: 2px -1px 3px var(--primary); }
+            30% { transform: translate(-1px, 1px); }
+            40% { transform: translate(1px, -2px); opacity: 0.8; }
+            50% { transform: translate(-1px, 1px); }
+            60% { transform: translate(3px, -2px); }
+            70% { transform: translate(-2px, 1px); }
+            80% { transform: translate(2px, -3px); }
+            90% { transform: translate(-3px, 2px); }
+        }
+
+        @keyframes typewriter {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .typewriter {
+            overflow: hidden;
+            white-space: nowrap;
+            animation: typewriter 3s steps(40) 1s 1 normal both;
+            color: var(--secondary);
+            text-shadow: 0 0 5px var(--secondary);
+            font-weight: bold;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .controls {
+                bottom: 10px;
+                right: 10px;
+            }
+
+            .btn {
+                padding: 5px 8px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* 4K Enhancements */
+        @media (min-width: 2560px) {
+            .container {
+                max-width: 1400px;
+                padding: 40px;
+            }
+
+            .ascii-art {
+                font-size: 1.5rem;
+            }
+
+            .command {
+                font-size: 1.3rem;
+            }
+
+            #output div {
+                font-size: 1.2rem;
+                margin-bottom: 12px;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="status-bar">
+        <div class="connection-status">
+            <div class="connection-dot"></div>
+            <span>SECURE CONNECTION ESTABLISHED</span>
+        </div>
+        <div id="datetime"></div>
+    </div>
+
+    <canvas id="matrix-rain" class="matrix-rain"></canvas>
+
+    <div class="container">
+        <div class="header">
+            <div class="ascii-art" id="ascii-art">
+███████╗    ███████╗ ██████╗ ██████╗██╗███████╗████████╗██╗   ██╗
+██╔════╝    ██╔════╝██╔═══██╗██╔════╝██║██╔════╝╚══██╔══╝╚██╗ ██╔╝
+█████╗      ███████╗██║   ██║██║     ██║█████╗     ██║    ╚████╔╝ 
+██╔══╝      ╚════██║██║   ██║██║     ██║██╔══╝     ██║     ╚██╔╝  
+██║         ███████║╚██████╔╝╚██████╗██║███████╗   ██║      ██║   
+╚═╝         ╚══════╝ ╚═════╝  ╚═════╝╚═╝╚══════╝   ╚═╝      ╚═╝   
+            </div>
+            <div class="typewriter" id="subtext">
+                > SYSTEM ACCESS GRANTED | ENCRYPTION: AES-256 | USER: ROOT
+            </div>
+        </div>
+
+        <div class="terminal">
+            <div class="prompt">
+                <span class="prompt-text">root@fsociety:~#</span>
+                <input type="text" class="command" id="command-input" autofocus>
+                <span class="cursor"></span>
+            </div>
+            <div id="output"></div>
+        </div>
+    </div>
+    
+    <div class="scanlines"></div>
+    <div class="noise"></div>
+
+    <div class="controls">
+        <button class="btn" id="theme-toggle">THEME</button>
+        <button class="btn" id="sound-toggle">SOUND</button>
+        <button class="btn" id="matrix-toggle">MATRIX</button>
+        <button class="btn" id="glitch-toggle">GLITCH</button>
+    </div>
+
+    <audio id="bg-music" loop>
+        <source src="https://assets.codepen.io/3364143/hacker-music.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="typing-sound">
+        <source src="https://assets.codepen.io/3364143/typing-sound.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="error-sound">
+        <source src="https://assets.codepen.io/3364143/error-sound.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // DOM Elements
+        const asciiArt = document.getElementById('ascii-art');
+        const subtext = document.getElementById('subtext');
+        const commandInput = document.getElementById('command-input');
+        const output = document.getElementById('output');
+        const themeToggle = document.getElementById('theme-toggle');
+        const soundToggle = document.getElementById('sound-toggle');
+        const matrixToggle = document.getElementById('matrix-toggle');
+        const glitchToggle = document.getElementById('glitch-toggle');
+        const bgMusic = document.getElementById('bg-music');
+        const typingSound = document.getElementById('typing-sound');
+        const errorSound = document.getElementById('error-sound');
+        const datetimeElement = document.getElementById('datetime');
+        const matrixCanvas = document.getElementById('matrix-rain');
+        const originalText = asciiArt.textContent;
+
+        // Commands
+        const commands = {
+            help: () => `<span class="system">Available commands:</span> ${Object.keys(commands).join(', ')}`,
+            about: () => "<span class='success'>F-SOCIETY</span> is a decentralized hacker collective fighting against oppression.",
+            theme: (args) => {
+                if (args.length === 0) {
+                    return `Current theme: ${currentTheme}. Available themes: dark, light, cyber`;
+                }
+                if (['dark', 'light', 'cyber'].includes(args[0])) {
+                    currentTheme = args[0];
+                    document.documentElement.setAttribute('data-theme', currentTheme);
+                    return `<span class='success'>Theme changed to ${currentTheme}</span>`;
+                }
+                return `<span class='error'>Invalid theme. Available: dark, light, cyber</span>`;
+            },
+            sound: () => {
+                toggleSound();
+                return `<span class='success'>Sound ${soundEnabled ? 'ENABLED' : 'DISABLED'}</span>`;
+            },
+            clear: () => {
+                output.innerHTML = '';
+                return "";
+            },
+            members: () => "<span class='system'>Core Members:</span> Elliot Alderson, Darlene, Mr. Robot, Tyrell Wellick, Whiterose",
+            mission: () => "<span class='system'>Mission:</span> Destroy all debt records and free society from financial slavery.",
+            date: () => new Date().toString(),
+            echo: (args) => args.join(' '),
+            social: () => "<span class='warning'>We don't have social media. We are ghosts.</span>",
+            contact: () => "<span class='error'>Nice try, FBI.</span>",
+            fsociety: () => {
+                window.open('https://www.youtube.com/watch?v=xIBiJ_SzJTA', '_blank');
+                return "<span class='success'>Playing fsociety message...</span>";
+            },
+            hack: () => {
+                playTypingSound();
+                setTimeout(() => {
+                    output.innerHTML += `<div><span class="system">Initializing hack sequence...</span></div>`;
+                    output.innerHTML += `<div><span class="system">Bypassing firewall...</span></div>`;
+                    output.innerHTML += `<div><span class="system">Injecting payload...</span></div>`;
+                    setTimeout(() => {
+                        output.innerHTML += `<div><span class="success">Hack successful! Access granted to E Corp mainframe</span></div>`;
+                        output.scrollTop = output.scrollHeight;
+                    }, 1500);
+                }, 100);
+                return "";
+            },
+            sysinfo: () => {
+                return `
+<span class="system">=== SYSTEM INFORMATION ===</span>
+<span class="success">OS:</span> F-SOCIETY Linux 5.4.0
+<span class="success">Kernel:</span> x86_64 Linux 5.4.0-42-generic
+<span class="success">Shell:</span> fsociety-sh 2.7.1
+<span class="success">CPU:</span> Intel i9-10900K (20) @ 5.30GHz
+<span class="success">Memory:</span> 32GB DDR4 3600MHz
+<span class="success">Encryption:</span> AES-256 (Active)
+<span class="success">Anonymity:</span> TOR Network + VPN
+                `;
+            },
+            encrypt: () => {
+                return `<span class="success">Initiating full disk encryption...</span>
+<span class="system">Encryption algorithm:</span> AES-256
+<span class="system">Key size:</span> 4096 bits
+<span class="success">All data is now securely encrypted</span>`;
+            },
+            decode: (args) => {
+                if (args.length === 0) {
+                    return `<span class="error">Please provide a string to decode</span>`;
+                }
+                const encoded = args.join(' ');
+                // Fake decoding for effect
+                return `<span class="system">Decoding:</span> ${encoded}
+<span class="system">Result:</span> ${btoa(encoded)}`;
+            },
+            bitcoin: () => {
+                const amount = (Math.random() * 10).toFixed(8);
+                return `<span class="success">Current Bitcoin holdings:</span> ${amount} BTC
+<span class="system">Value:</span> $${(amount * 50000).toFixed(2)} USD`;
+            },
+            reboot: () => {
+                output.innerHTML += `<div><span class="warning">System reboot initiated...</span></div>`;
+                setTimeout(() => {
+                    output.innerHTML = `<div><span class="success">System rebooted successfully</span></div>`;
+                    output.innerHTML += `<div>F-SOCIETY TERMINAL v3.0 - TYPE 'HELP' FOR COMMANDS</div>`;
+                    output.innerHTML += `<div class="warning">WARNING: UNAUTHORIZED ACCESS WILL BE TRACKED</div>`;
+                    output.scrollTop = output.scrollHeight;
+                }, 2000);
+                return "";
+            }
+        };
+
+        // Initialize
+        let soundEnabled = false;
+        let currentTheme = 'dark';
+        let matrixEnabled = true;
+        let glitchEnabled = true;
+        let matrixAnimation;
+
+        // Update datetime
+        function updateDateTime() {
+            const now = new Date();
+            datetimeElement.textContent = now.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            }).toUpperCase();
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // Matrix Rain Effect
+        function initMatrix() {
+            const canvas = matrixCanvas;
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+            const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const nums = '0123456789';
+            const symbols = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~';
+            
+            const alphabet = katakana + latin + nums + symbols;
+            
+            const fontSize = 16;
+            const columns = canvas.width / fontSize;
+            
+            const rainDrops = [];
+            
+            for (let x = 0; x < columns; x++) {
+                rainDrops[x] = 1;
+            }
+            
+            const draw = () => {
+                if (!matrixEnabled) return;
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#0f0';
+                ctx.font = fontSize + 'px monospace';
+                
+                for (let i = 0; i < rainDrops.length; i++) {
+                    const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                    ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
+                    
+                    if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        rainDrops[i] = 0;
+                    }
+                    rainDrops[i]++;
+                }
+            };
+            
+            matrixAnimation = setInterval(draw, 30);
+        }
+
+        // Glitch effect
+        function glitchText() {
+            if (!glitchEnabled) return;
+            
+            let glitchedText = '';
+            const glitchChars = ['█', '╗', '╝', '║', '═', '╔', '╚', ' ', '╣', '╩', '╦', '╠', '░'];
+            
+            for (let i = 0; i < originalText.length; i++) {
+                if (Math.random() > 0.97) {
+                    glitchedText += glitchChars[Math.floor(Math.random() * glitchChars.length)];
+                } else {
+                    glitchedText += originalText[i];
+                }
+            }
+            
+            asciiArt.textContent = glitchedText;
+            
+            setTimeout(() => {
+                asciiArt.textContent = originalText;
+            }, 100 + Math.random() * 200);
+        }
+
+        // Mouse move effect
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth - 0.5;
+            const y = e.clientY / window.innerHeight - 0.5;
+            asciiArt.style.transform = `translate(${x * 20}px, ${y * 10}px)`;
+        });
+
+        // Sound functions
+        function playTypingSound() {
+            if (!soundEnabled) return;
+            typingSound.currentTime = 0;
+            typingSound.play();
+        }
+
+        function playErrorSound() {
+            if (!soundEnabled) return;
+            errorSound.currentTime = 0;
+            errorSound.play();
+        }
+
+        // Command processing
+        commandInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const input = commandInput.value.trim();
+                const [cmd, ...args] = input.split(' ');
+                
+                output.innerHTML += `<div>> ${input}</div>`;
+                
+                if (commands[cmd]) {
+                    playTypingSound();
+                    const result = commands[cmd](args);
+                    if (result) {
+                        output.innerHTML += `<div>${result}</div>`;
+                    }
+                } else {
+                    playErrorSound();
+                    output.innerHTML += `<div class="error">Command not found: ${cmd}. Type 'help' for available commands.</div>`;
+                }
+                
+                commandInput.value = '';
+                output.scrollTop = output.scrollHeight;
+            }
+        });
+
+        // Theme toggle
+        function toggleTheme() {
+            const themes = ['dark', 'light', 'cyber'];
+            const currentIndex = themes.indexOf(currentTheme);
+            currentTheme = themes[(currentIndex + 1) % themes.length];
+            document.documentElement.setAttribute('data-theme', currentTheme);
+        }
+
+        // Sound toggle
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            if (soundEnabled) {
+                bgMusic.volume = 0.3;
+                bgMusic.play();
+            } else {
+                bgMusic.pause();
+            }
+        }
+
+        // Matrix toggle
+        function toggleMatrix() {
+            matrixEnabled = !matrixEnabled;
+            matrixCanvas.style.opacity = matrixEnabled ? '0.15' : '0';
+        }
+
+        // Glitch toggle
+        function toggleGlitch() {
+            glitchEnabled = !glitchEnabled;
+        }
+
+        // Event listeners
+        themeToggle.addEventListener('click', toggleTheme);
+        soundToggle.addEventListener('click', toggleSound);
+        matrixToggle.addEventListener('click', toggleMatrix);
+        glitchToggle.addEventListener('click', toggleGlitch);
+
+        // Start effects
+        setInterval(glitchText, 2000);
+        initMatrix();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            clearInterval(matrixAnimation);
+            initMatrix();
+        });
+
+        // Initial output
+        setTimeout(() => {
+            output.innerHTML += `<div class="system">F-SOCIETY TERMINAL PRO v3.0 - TYPE 'HELP' FOR COMMANDS</div>`;
+            output.innerHTML += `<div class="warning">WARNING: UNAUTHORIZED ACCESS WILL BE TRACKED AND REPORTED</div>`;
+            output.innerHTML += `<div class="success">Secure connection established via TOR network</div>`;
+            output.innerHTML += `<div class="system">System time: ${new Date().toString()}</div>`;
+        }, 1000);
+
+        // Easter egg
+        const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+        let konamiIndex = 0;
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === konamiCode[konamiIndex]) {
+                konamiIndex++;
+                if (konamiIndex === konamiCode.length) {
+                    output.innerHTML += `<div class="success">SECRET UNLOCKED: ALLSAFE EXPLOIT ACTIVATED</div>`;
+                    output.innerHTML += `<div class="system">Initiating E Corp database breach...</div>`;
+                    setTimeout(() => {
+                        output.innerHTML += `<div class="success">Exploit successful! All debt records erased.</div>`;
+                        output.scrollTop = output.scrollHeight;
+                    }, 3000);
+                    konamiIndex = 0;
+                }
+            } else {
+                konamiIndex = 0;
+            }
+        });
+    </script>
+</body>
+</html>
